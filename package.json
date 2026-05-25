@@ -1,0 +1,38 @@
+{
+  "name": "architect-ai",
+  "version": "0.1.0",
+  "description": "AI Technical Architect — turns natural-language project ideas into production-grade architecture plans.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "architect-ai": "./bin/architect-ai.ts"
+  },
+  "scripts": {
+    "dev": "tsx bin/architect-ai.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/bin/architect-ai.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "dotenv": "^16.4.5",
+    "ink": "^5.0.1",
+    "ink-select-input": "^6.0.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@types/react": "^18.3.10",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  }
+}
