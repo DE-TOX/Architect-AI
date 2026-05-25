@@ -6,6 +6,7 @@ import { validateArchitecture } from '../../agents/compatibility.js';
 import { generateMermaid } from '../../diagrams/mermaid.js';
 import { writeDocument } from '../../agents/documentation.js';
 import { normalizeProfile } from '../../prompts/interview.js';
+import { activeProvider, modelFor } from '../../llm/index.js';
 import type { InterviewAnswers } from '../../agents/requirements.js';
 import type { ProjectProfile } from '../../types/profile.js';
 
@@ -18,11 +19,11 @@ interface Props {
 type StepKey = 'profile' | 'architecture' | 'compatibility' | 'diagram' | 'document';
 
 const STEP_LABELS: Record<StepKey, string> = {
-  profile: 'Normalizing requirements',
-  architecture: 'Designing architecture (Claude Sonnet)',
-  compatibility: 'Validating against npm registry',
-  diagram: 'Generating Mermaid diagram',
-  document: 'Assembling final document',
+  profile: 'Understanding your project',
+  architecture: 'Designing the architecture',
+  compatibility: 'Verifying technology choices',
+  diagram: 'Visualizing the system',
+  document: 'Generating your PRD',
 };
 
 const ORDER: StepKey[] = ['profile', 'architecture', 'compatibility', 'diagram', 'document'];
@@ -100,6 +101,11 @@ export const Generating: React.FC<Props> = ({ answers, onDone, onError }) => {
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold>Generating architecture plan…</Text>
+      <Box>
+        <Text dimColor>
+          provider: {activeProvider()} · architecture model: {modelFor('architecture')}
+        </Text>
+      </Box>
       <Box flexDirection="column" marginTop={1}>
         {ORDER.map((key) => (
           <ProgressLine

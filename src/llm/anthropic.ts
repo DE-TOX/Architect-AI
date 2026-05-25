@@ -1,34 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { DEFAULT_MAX_TOKENS, withRetry } from './retry';
 import type {
   GenerateStructuredOptions,
   LLMProvider,
   ProviderConfig,
   StreamTextOptions,
 } from './types.js';
-
-const DEFAULT_MAX_TOKENS = 4096;
-const RETRIES = 3;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function withRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
-  let lastErr: unknown;
-  for (let attempt = 1; attempt <= RETRIES; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastErr = err;
-      if (attempt < RETRIES) {
-        const backoff = 500 * 2 ** (attempt - 1);
-        await sleep(backoff);
-      }
-    }
-  }
-  throw new Error(`${label} failed after ${RETRIES} attempts: ${String(lastErr)}`);
-}
 
 export class AnthropicProvider implements LLMProvider {
   private readonly client: Anthropic;

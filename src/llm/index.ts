@@ -1,32 +1,75 @@
-import { AnthropicProvider } from './anthropic.js';
-import type { AgentModelKey, LLMProvider, ProviderConfig } from './types.js';
+import { AnthropicProvider } from './anthropic';
+import { GeminiProvider } from './gemini';
+import { OpenAIProvider } from './openai';
+import type { AgentModelKey, LLMProvider, ProviderConfig } from './types';
 
-const DEFAULT_MODELS: Record<AgentModelKey, string> = {
-  interview: process.env.LLM_MODEL_INTERVIEW ?? 'claude-haiku-4-5',
-  architecture: process.env.LLM_MODEL_ARCHITECTURE ?? 'claude-sonnet-4-6',
-  diagram: process.env.LLM_MODEL_DIAGRAM ?? 'claude-sonnet-4-6',
+export type ProviderName = 'anthropic' | 'openai' | 'gemini';
+
+const PROVIDER_DEFAULTS: Record<ProviderName, Record<AgentModelKey, string>> = {
+  anthropic: {
+    interview: 'claude-haiku-4-5',
+    architecture: 'claude-sonnet-4-6',
+    diagram: 'claude-sonnet-4-6',
+  },
+  openai: {
+    interview: 'gpt-4o-mini',
+    architecture: 'gpt-4o',
+    diagram: 'gpt-4o',
+  },
+  gemini: {
+    interview: 'gemini-2.5-flash',
+    architecture: 'gemini-2.5-pro',
+    diagram: 'gemini-2.5-pro',
+  },
 };
 
-let cached: LLMProvider | undefined;
+function resolveProviderName(): ProviderName {
+  const raw = (process.env.LLM_PROVIDER ?? 'anthropic').toLowerCase();
+  if (raw === 'anthropic' || raw === 'openai' || raw === 'gemini') return raw;
+  throw new Error(
+    `Unsupported LLM_PROVIDER="${raw}". Supported values: anthropic, openai, gemini.`,
+  );
+}
 
-export function getLLM(): LLMProvider {
-  if (cached) return cached;
-  const provider = (process.env.LLM_PROVIDER ?? 'anthropic').toLowerCase();
-  const config: ProviderConfig = { defaultModels: DEFAULT_MODELS };
+function resolveModels(provider: ProviderName): Record<AgentModelKey, string> {
+  const defaults = PROVIDER_DEFAULTS[provider];
+  return {
+    interview: process.env.LLM_MODEL_INTERVIEW ?? defaults.interview,
+    architecture: process.env.LLM_MODEL_ARCHITECTURE ?? defaults.architecture,
+    diagram: process.env.LLM_MODEL_DIAGRAM ?? defaults.diagram,
+  };
+}
 
-  switch (provider) {
+let cachedClient: LLMProvider | undefined;
+
+function buildClient(): LLMProvider {
+  const name = resolveProviderName();
+  const config: ProviderConfig = { defaultModels: resolveModels(name) };
+  switch (name) {
     case 'anthropic':
-      cached = new AnthropicProvider(config);
-      return cached;
-    default:
-      throw new Error(
-        `Unsupported LLM_PROVIDER="${provider}". Currently only "anthropic" is implemented.`,
-      );
+      return new AnthropicProvider(config);
+    case 'openai':
+      return new OpenAIProvider(config);
+    case 'gemini':
+      return new GeminiProvider(config);
   }
 }
 
+export function getLLM(): LLMProvider {
+  if (!cachedClient) cachedClient = buildClient();
+  return cachedClient;
+}
+
 export function modelFor(key: AgentModelKey): string {
-  return DEFAULT_MODELS[key];
+    return resolveModels(resolveProviderName())[key];
+}
+
+export function activeProvider(): ProviderName {
+  return resolveProviderName();
+}
+
+export function _resetForTests(): void {
+  cachedClient = undefined;
 }
 
 export type { LLMProvider } from './types.js';
